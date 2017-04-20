@@ -22,12 +22,9 @@ namespace hwcomposer {
 
 ScopedRendererState::ScopedRendererState(Renderer* renderer)
     : renderer_(renderer) {
-  is_valid_ = renderer_->MakeCurrent();
 }
 
 ScopedRendererState::~ScopedRendererState() {
-  if (is_valid_)
-    renderer_->RestoreState();
 }
 
 }  // namespace hwcomposer

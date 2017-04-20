@@ -46,7 +46,7 @@ class DisplayPlaneManager;
 struct HwcLayer;
 class OverlayBufferManager;
 
-class DisplayQueue {
+class DisplayQueue : public HWCThread {
  public:
   DisplayQueue(uint32_t gpu_fd, uint32_t crtc_id,
                OverlayBufferManager* buffer_manager);
@@ -64,9 +64,28 @@ class DisplayQueue {
   void SetBrightness(uint32_t red, uint32_t green, uint32_t blue);
   bool SetBroadcastRGB(const char* range_property);
 
-  void HandleExit();
+ protected:
+  void HandleRoutine() override;
+  void HandleExit() override;
 
  private:
+  struct DisplayQueueItem {
+    std::vector<OverlayLayer> layers_;
+    std::vector<HwcRect<int>> layers_rects_;
+    bool needs_modeset_ = false;
+    bool needs_color_correction_ = false;
+    uint32_t brightness_;
+    uint32_t contrast_;
+    struct gamma_colors gamma_;
+    std::unique_ptr<NativeSync> sync_object_;
+  };
+
+  void GetNextQueueItem(DisplayQueueItem& item);
+  void Flush();
+  void HandleUpdateRequest(DisplayQueueItem& queue_item);
+  void ProcessRequests();
+  void CommitFinished();
+
   bool ApplyPendingModeset(drmModeAtomicReqPtr property_set);
   bool GetFence(drmModeAtomicReqPtr property_set, uint64_t* out_fence);
   void GetDrmObjectProperty(const char* name,
@@ -108,12 +127,18 @@ class DisplayQueue {
   uint64_t fence_ = 0;
   bool needs_modeset_ = false;
   bool needs_color_correction_ = false;
-  std::unique_ptr<KMSFenceEventHandler> kms_fence_handler_;
   std::unique_ptr<DisplayPlaneManager> display_plane_manager_;
   std::vector<OverlayLayer> previous_layers_;
   DisplayPlaneStateList previous_plane_state_;
+  std::vector<OverlayLayer> current_layers_;
+  DisplayPlaneStateList current_plane_state_;
   OverlayBufferManager* buffer_manager_;
-  std::vector<NativeSurface*> in_flight_surfaces_;
+  std::queue<DisplayQueueItem> queue_;
+  SpinLock spin_lock_;
+  SpinLock display_queue_;
+  ScopedFd out_fence_;
+  std::unique_ptr<NativeSync> previous_sync_object_;
+  std::unique_ptr<NativeSync> sync_object_;
 };
 
 }  // namespace hwcomposer

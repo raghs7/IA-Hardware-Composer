@@ -22,8 +22,7 @@ namespace hwcomposer {
 
 EGLOffScreenContext::EGLOffScreenContext()
     : egl_display_(EGL_NO_DISPLAY),
-      egl_ctx_(EGL_NO_CONTEXT),
-      restore_context_(false) {
+      egl_ctx_(EGL_NO_CONTEXT) {
 }
 
 EGLOffScreenContext::~EGLOffScreenContext() {
@@ -71,35 +70,6 @@ bool EGLOffScreenContext::Init() {
   return true;
 }
 
-bool EGLOffScreenContext::MakeCurrent() {
-  saved_egl_display_ = eglGetCurrentDisplay();
-  saved_egl_ctx_ = eglGetCurrentContext();
-  saved_egl_read_ = eglGetCurrentSurface(EGL_READ);
-  saved_egl_draw_ = eglGetCurrentSurface(EGL_DRAW);
-  restore_context_ = false;
-
-  if (saved_egl_display_ != egl_display_ || saved_egl_ctx_ != egl_ctx_ ||
-      saved_egl_read_ != EGL_NO_SURFACE || saved_egl_draw_ != EGL_NO_SURFACE) {
-    if (eglMakeCurrent(egl_display_, EGL_NO_SURFACE, EGL_NO_SURFACE,
-                       egl_ctx_)) {
-      restore_context_ = true;
-    } else {
-      ETRACE("failed to make context current");
-      return false;
-    }
-  }
-
-  return true;
-}
-
-void EGLOffScreenContext::RestoreState() {
-  if (!restore_context_)
-    return;
-
-  eglMakeCurrent(saved_egl_display_, saved_egl_read_, saved_egl_draw_,
-                 saved_egl_ctx_);
-}
-
 EGLint EGLOffScreenContext::GetSyncFD() {
   EGLint sync_fd = -1;
 #ifndef DISABLE_EXPLICIT_SYNC
@@ -117,6 +87,9 @@ EGLint EGLOffScreenContext::GetSyncFD() {
   }
 
   eglDestroySyncKHR(egl_display_, egl_sync);
+#else
+  // Lets ensure every thing is flushed.
+  eglMakeCurrent(egl_display_, EGL_NO_SURFACE, EGL_NO_SURFACE, egl_ctx_);
 #endif
   return sync_fd;
 }

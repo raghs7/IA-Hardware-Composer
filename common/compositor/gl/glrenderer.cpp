@@ -40,13 +40,6 @@ bool GLRenderer::Init() {
     return false;
   }
 
-  ScopedRendererState state(this);
-
-  if (!state.IsValid()) {
-    ETRACE("Failed to initialize GLRenderer.");
-    return false;
-  }
-
   InitializeShims();
 
   // generate the VAO & bind
@@ -112,14 +105,6 @@ bool GLRenderer::Draw(const std::vector<RenderState> &render_states,
   glDisable(GL_SCISSOR_TEST);
   surface->SetNativeFence(context_.GetSyncFD());
   return true;
-}
-
-void GLRenderer::RestoreState() {
-  context_.RestoreState();
-}
-
-bool GLRenderer::MakeCurrent() {
-  return context_.MakeCurrent();
 }
 
 void GLRenderer::InsertFence(uint64_t kms_fence) {

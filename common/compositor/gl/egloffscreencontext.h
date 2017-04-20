@@ -34,10 +34,6 @@ class EGLOffScreenContext {
     return egl_display_;
   }
 
-  bool MakeCurrent();
-
-  void RestoreState();
-
  private:
   EGLDisplay egl_display_;
   EGLContext egl_ctx_;

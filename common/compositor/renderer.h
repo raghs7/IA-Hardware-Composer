@@ -39,10 +39,6 @@ class Renderer {
                     NativeSurface* surface) = 0;
 
   virtual void InsertFence(uint64_t kms_fence) = 0;
-
-  virtual void RestoreState() = 0;
-
-  virtual bool MakeCurrent() = 0;
 };
 
 }  // namespace hwcomposer
