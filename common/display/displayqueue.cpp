@@ -111,10 +111,10 @@ bool DisplayQueue::Initialize(uint32_t width, uint32_t height, uint32_t pipe,
   drmModePropertyPtr broadcastrgb_props =
       drmModeGetProperty(gpu_fd_, broadcastrgb_id_);
 
-  if (!(broadcastrgb_props->flags & DRM_MODE_PROP_ENUM))
+  if (broadcastrgb_props && !(broadcastrgb_props->flags & DRM_MODE_PROP_ENUM))
     return false;
 
-  for (int i = 0; i < broadcastrgb_props->count_enums; i++) {
+  for (int i = 0; broadcastrgb_props && i < broadcastrgb_props->count_enums; i++) {
     if (!strcmp(broadcastrgb_props->enums[i].name, "Full")) {
       broadcastrgb_full_ = broadcastrgb_props->enums[i].value;
     } else if (!strcmp(broadcastrgb_props->enums[i].name, "Automatic")) {
